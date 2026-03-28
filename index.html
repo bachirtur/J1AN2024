@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BAC NSI 2024 - Sujet 03 - Évaluation Interactive</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+:root{--bg:#f0f2f5;--card:#fff;--primary:#6c5ce7;--primary-dark:#5a4bd1;--success:#00b894;--danger:#d63031;--warning:#fdcb6e;--text:#2d3436;--text-light:#636e72;--border:#dfe6e9;--code-bg:#282a36;--radius:14px;--shadow:0 4px 24px rgba(0,0,0,.07)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.65}
+.header{background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff;padding:18px 28px;position:sticky;top:0;z-index:100;box-shadow:0 4px 20px rgba(108,92,231,.35)}
+.header-top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.header h1{font-size:1.3rem;font-weight:700}
+.header .subtitle{opacity:.85;font-size:.82rem;margin-top:2px}
+.timer-box{background:rgba(255,255,255,.18);border-radius:10px;padding:10px 20px;text-align:center;backdrop-filter:blur(6px)}
+.timer-box .time{font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums}
+.timer-box .label{font-size:.68rem;text-transform:uppercase;letter-spacing:1px;opacity:.8}
+.timer-box.warning .time{color:#fdcb6e;animation:pulse 1s infinite}
+.timer-box.danger .time{color:#ff7675;animation:pulse .5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.save-indicator{font-size:.72rem;opacity:.8;display:flex;align-items:center;gap:5px}
+.save-indicator .dot{width:8px;height:8px;border-radius:50%;background:var(--success);display:inline-block}
+.nav-tabs{display:flex;gap:0;background:#fff;border-bottom:2px solid var(--border);padding:0 20px;overflow-x:auto;box-shadow:var(--shadow)}
+.nav-tab{padding:13px 22px;cursor:pointer;border:none;background:none;font-size:.88rem;font-weight:600;color:var(--text-light);position:relative;transition:.3s;white-space:nowrap}
+.nav-tab:hover{color:var(--primary)}
+.nav-tab.active{color:var(--primary)}
+.nav-tab.active::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:3px;background:var(--primary);border-radius:3px 3px 0 0}
+.nav-tab .badge{background:var(--primary);color:#fff;border-radius:20px;padding:2px 8px;font-size:.68rem;margin-left:5px}
+.nav-tab.done .badge{background:var(--success)}
+.container{max-width:1100px;margin:0 auto;padding:20px}
+.exercise-panel{display:none}
+.exercise-panel.active{display:block}
+.exercise-header{background:var(--card);border-radius:var(--radius);padding:22px;margin-bottom:18px;box-shadow:var(--shadow);border-left:5px solid var(--primary)}
+.exercise-header h2{font-size:1.25rem;color:var(--primary);margin-bottom:4px}
+.exercise-header .theme{font-style:italic;color:var(--text-light);font-size:.88rem}
+.exercise-header .points-badge{display:inline-block;background:linear-gradient(135deg,var(--primary),#a29bfe);color:#fff;padding:4px 14px;border-radius:20px;font-size:.78rem;font-weight:600;margin-top:8px}
+.context-box{background:var(--card);border-radius:var(--radius);padding:18px 22px;margin-bottom:18px;box-shadow:var(--shadow);font-size:.88rem;border:1px solid var(--border)}
+.context-box code{background:#e9ecef;padding:2px 6px;border-radius:4px;font-family:'Fira Code',monospace;font-size:.83rem}
+.context-box pre{background:var(--code-bg);color:#f8f8f2;padding:14px;border-radius:8px;overflow-x:auto;font-size:.83rem;margin:10px 0}
+.context-box pre code{background:none;color:inherit}
+.context-box table{border-collapse:collapse;width:100%;margin:10px 0;font-size:.83rem}
+.context-box th,.context-box td{border:1px solid #ccc;padding:6px 10px;text-align:center}
+.context-box th{background:#e9ecef;font-weight:600}
+.question-card{background:var(--card);border-radius:var(--radius);padding:22px;margin-bottom:14px;box-shadow:var(--shadow);transition:border-color .3s;border:2px solid transparent}
+.question-card:hover{border-color:rgba(108,92,231,.15)}
+.question-card.correct{border-color:var(--success);background:#f0fff4}
+.question-card.incorrect{border-color:var(--danger);background:#fff5f5}
+.question-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:10px}
+.question-number{background:var(--primary);color:#fff;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.82rem;flex-shrink:0}
+.question-text{flex:1;font-size:.92rem}
+.question-text code{background:#e9ecef;padding:2px 6px;border-radius:4px;font-family:'Fira Code',monospace;font-size:.83rem}
+.question-text pre{background:var(--code-bg);color:#f8f8f2;padding:12px;border-radius:8px;overflow-x:auto;font-size:.82rem;margin:8px 0}
+.question-text pre code{background:none;color:inherit}
+.question-points{background:#e9ecef;color:var(--text-light);padding:3px 10px;border-radius:15px;font-size:.72rem;font-weight:600;white-space:nowrap}
+.answer-area{margin-top:10px}
+.answer-area textarea{width:100%;min-height:75px;padding:11px;border:2px solid var(--border);border-radius:8px;font-size:.88rem;resize:vertical;font-family:inherit;transition:border-color .3s}
+.answer-area textarea:focus{outline:none;border-color:var(--primary)}
+.code-editor-wrapper{border:2px solid var(--border);border-radius:8px;overflow:hidden;transition:border-color .3s}
+.code-editor-wrapper:focus-within{border-color:var(--primary)}
+.code-editor-wrapper .CodeMirror{height:auto;min-height:90px;font-size:.83rem}
+.correction-box{margin-top:14px;padding:14px;border-radius:8px;display:none}
+.correction-box.show{display:block}
+.correction-box.correct-box{background:#ecfdf5;border:1px solid #a7f3d0}
+.correction-box.incorrect-box{background:#fef2f2;border:1px solid #fecaca}
+.correction-box .result-icon{font-size:1rem;font-weight:700;margin-bottom:6px}
+.correction-box h4{font-size:.82rem;color:var(--text-light);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+.correction-box .expected{background:#f0fdf4;padding:10px;border-radius:6px;font-family:'Fira Code',monospace;font-size:.8rem;white-space:pre-wrap;margin:5px 0;border:1px solid #bbf7d0}
+.correction-box .explanation{font-size:.83rem;color:var(--text-light);margin-top:8px;padding:10px;background:rgba(108,92,231,.04);border-radius:6px;border-left:3px solid var(--primary)}
+.submit-section{text-align:center;padding:35px 20px;margin-top:18px}
+.btn{padding:11px 26px;border:none;border-radius:8px;font-size:.92rem;font-weight:600;cursor:pointer;transition:.3s;display:inline-flex;align-items:center;gap:8px}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-dark);transform:translateY(-2px);box-shadow:0 6px 20px rgba(108,92,231,.3)}
+.btn-success{background:var(--success);color:#fff}
+.btn-success:hover{background:#00a381}
+.btn-outline{background:transparent;border:2px solid var(--primary);color:var(--primary)}
+.btn-outline:hover{background:var(--primary);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.results-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);z-index:200;justify-content:center;align-items:center;padding:20px}
+.results-overlay.show{display:flex}
+.results-modal{background:#fff;border-radius:20px;padding:36px;max-width:540px;width:100%;text-align:center;max-height:90vh;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,.3)}
+.results-modal .grade-circle{width:135px;height:135px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:18px auto;font-size:2.1rem;font-weight:800;color:#fff}
+.grade-excellent{background:linear-gradient(135deg,#00b894,#00a381)}
+.grade-bien{background:linear-gradient(135deg,#6c5ce7,#a29bfe)}
+.grade-assez-bien{background:linear-gradient(135deg,#fdcb6e,#e17055)}
+.grade-passable{background:linear-gradient(135deg,#ffeaa7,#fab1a0)}
+.grade-insuffisant{background:linear-gradient(135deg,#d63031,#e17055)}
+.grade-circle small{font-size:.78rem;font-weight:400;opacity:.9}
+.results-modal .appreciation{font-size:1.15rem;font-weight:700;margin:8px 0}
+.results-modal .percentage{font-size:.95rem;color:var(--text-light)}
+.exercise-scores{text-align:left;margin:18px 0;padding:14px;background:#f8f9fa;border-radius:10px}
+.exercise-scores .score-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)}
+.exercise-scores .score-row:last-child{border:none}
+.progress-bar{height:7px;background:#e9ecef;border-radius:4px;overflow:hidden;margin-top:4px}
+.progress-bar .fill{height:100%;border-radius:4px;transition:width .8s ease}
+.btn-group{display:flex;gap:10px;justify-content:center;margin-top:18px;flex-wrap:wrap}
+.locked .answer-area textarea,.locked .CodeMirror{opacity:.7;pointer-events:none}
+.part-header{background:linear-gradient(135deg,rgba(108,92,231,.08),rgba(108,92,231,.02));padding:14px 18px;border-radius:10px;margin:18px 0 14px;border-left:4px solid var(--primary)}
+.part-header h3{color:var(--primary);font-size:1rem}
+@media(max-width:768px){.header-top{flex-direction:column;text-align:center}.nav-tab{padding:10px 14px;font-size:.78rem}.container{padding:10px}.question-card{padding:14px}.results-modal{padding:22px}}
+</style>
+</head>
+<body>
+
+<div class="header">
+<div class="header-top">
+<div>
+<h1>📚 BAC NSI 2024 — Session Jour 1 — Sujet 03</h1>
+<div class="subtitle">Numérique et Sciences Informatiques — Épreuve de spécialité</div>
+</div>
+<div class="timer-box" id="timerBox">
+<div class="label">⏱ Temps restant</div>
+<div class="time" id="timerDisplay">03:30:00</div>
+</div>
+<div>
+<div class="save-indicator" id="saveIndicator"><span class="dot"></span> Sauvegarde auto activée</div>
+<button class="btn btn-outline" style="margin-top:5px;padding:5px 12px;font-size:.72rem;color:#fff;border-color:rgba(255,255,255,.4)" onclick="resetExam()">🔄 Réinitialiser</button>
+</div>
+</div>
+</div>
+
+<div class="nav-tabs" id="navTabs">
+<button class="nav-tab active" data-tab="0" onclick="switchTab(0)">📗 Exercice 1 <span class="badge">6 pts</span></button>
+<button class="nav-tab" data-tab="1" onclick="switchTab(1)">📘 Exercice 2 <span class="badge">6 pts</span></button>
+<button class="nav-tab" data-tab="2" onclick="switchTab(2)">📙 Exercice 3 <span class="badge">8 pts</span></button>
+</div>
+
+<div class="container" id="mainContainer">
+
+<!-- ============ EXERCICE 1 ============ -->
+<div class="exercise-panel active" id="panel0">
+<div class="exercise-header">
+<h2>Exercice 1 — Processus et Ordonnancement</h2>
+<div class="theme">Programmation Python, POO, structures de données (file), ordonnancement et interblocage</div>
+<span class="points-badge">6 points</span>
+</div>
+
+<div class="context-box">
+<p>On s'intéresse aux processus et à leur ordonnancement au sein d'un système d'exploitation utilisant un <strong>monoprocesseur</strong>.</p>
+<p>On dispose d'une classe <code>Processus</code> :</p>
+<pre><code>p = Processus(nom: str, duree: int)
+p.execute_un_cycle()   # Exécute pendant un cycle
+p.est_fini()           # True si terminé, False sinon</code></pre>
+<p>Et d'une classe <code>File</code> :</p>
+<pre><code>class File:
+    def __init__(self):
+        self.contenu = []
+    def enfile(self, element):
+        self.contenu.append(element)
+    def defile(self):
+        return self.contenu.pop(0)
+    def est_vide(self):
+        return self.contenu == []</code></pre>
+<p><strong>Ordonnancement tourniquet :</strong> à chaque cycle, si un nouveau processus est créé, il est mis dans la file ; on défile un processus et on l'exécute un cycle ; s'il n'est pas terminé, on le replace dans la file.</p>
+<p><strong>Processus de l'exemple :</strong></p>
+<table><tr><th>Processus</th><th>Cycle de création</th><th>Durée en cycles</th></tr>
+<tr><td>A</td><td>2</td><td>3</td></tr><tr><td>B</td><td>1</td><td>4</td></tr>
+<tr><td>C</td><td>4</td><td>3</td></tr><tr><td>D</td><td>0</td><td>5</td></tr></table>
+<pre><code>p1 = Processus("p1", 4)
+p2 = Processus("p2", 3)
+p3 = Processus("p3", 5)
+p4 = Processus("p4", 3)
+depart_proc = {0: p1, 1: p3, 2: p2, 3: p4}</code></pre>
+</div>
+
+<div class="question-card" id="card_e1q1">
+<div class="question-top"><div class="question-number">1</div>
+<div class="question-text">Citer les <strong>trois états</strong> dans lesquels un processus peut se trouver.</div>
+<div class="question-points">0.5 pt</div></div>
+<div class="answer-area"><textarea id="ans_e1q1" placeholder="Les trois états d'un processus..."></textarea></div>
+<div class="correction-box" id="corr_e1q1"></div>
+</div>
+
+<div class="question-card" id="card_e1q2">
+<div class="question-top"><div class="question-number">2</div>
+<div class="question-text">Citer les <strong>deux seuls états possibles</strong> pour un processus dans ce contexte (sans ressources partagées).</div>
+<div class="question-points">0.5 pt</div></div>
+<div class="answer-area"><textarea id="ans_e1q2" placeholder="Les deux états possibles..."></textarea></div>
+<div class="correction-box" id="corr_e1q2"></div>
+</div>
+
+<div class="question-card" id="card_e1q3">
+<div class="question-top"><div class="question-number">3</div>
+<div class="question-text">Rectifier sur votre copie le code de la classe <code>File</code> pour que la méthode <code>defile</code> renvoie <code>None</code> lorsque la file est vide.</div>
+<div class="question-points">1 pt</div></div>
+<div class="answer-area"><div class="code-editor-wrapper"><textarea id="ans_e1q3" class="code-editor" data-mode="python"></textarea></div></div>
+<div class="correction-box" id="corr_e1q3"></div>
+</div>
+
+<div class="question-card" id="card_e1q4">
+<div class="question-top"><div class="question-number">4</div>
+<div class="question-text">Recopier et compléter le <strong>chronogramme</strong> pour les processus <code>p1</code>, <code>p2</code>, <code>p3</code> et <code>p4</code>. Indiquer quand chaque processus s'exécute entre les cycles 0 et 15.<br><em>Rappel : <code>depart_proc = {0: p1, 1: p3, 2: p2, 3: p4}</code>, p1(durée 4), p2(durée 3), p3(durée 5), p4(durée 3)</em></div>
+<div class="question-points">1 pt</div></div>
+<div class="answer-area"><textarea id="ans_e1q4" placeholder="Décrivez le chronogramme cycle par cycle : cycle 0 → p1, cycle 1 → p3 (p1 revient en file)..." style="min-height:120px"></textarea></div>
+<div class="correction-box" id="corr_e1q4"></div>
+</div>
+
+<div class="question-card" id="card_e1q5">
+<div class="question-top"><div class="question-number">5</div>
+<div class="question-text">Compléter le code de la classe <code>Ordonnanceur</code> : les méthodes <code>ajoute_nouveau_processus</code> (ligne 10) et <code>tourniquet</code> (lignes 17, 18, 20).
+<pre><code>class Ordonnanceur:
+    def __init__(self):
+        self.temps = 0
+        self.file = File()
+    def ajoute_nouveau_processus(self, proc):
+        ...                          # ligne 10
+    def tourniquet(self):
+        self.temps += 1
+        if not self.file.est_vide():
+            proc = ...               # ligne 17
+            ...                      # ligne 18
+            if not proc.est_fini():
+                ...                  # ligne 20
+            return proc.nom
+        else:
+            return None</code></pre></div>
+<div class="question-points">1.5 pt</div></div>
+<div class="answer-area"><div class="code-editor-wrapper"><textarea id="ans_e1q5" class="code-editor" data-mode="python"></textarea></div></div>
+<div class="correction-box" id="corr_e1q5"></div>
+</div>
+
+<div class="question-card" id="card_e1q6">
+<div class="question-top"><div class="question-number">6</div>
+<div class="question-text">Écrire un programme qui utilise les variables <code>p1</code>, <code>p2</code>, <code>p3</code>, <code>p4</code> et <code>depart_proc</code>, crée un ordonnanceur, ajoute les processus au bon moment, affiche le processus élu, et s'arrête lorsqu'il n'y a plus de processus à exécuter.</div>
+<div class="question-points">1 pt</div></div>
+<div class="answer-area"><div class="code-editor-wrapper"><textarea id="ans_e1q6" class="code-editor" data-mode="python"></textarea></div></div>
+<div class="correction-box" id="corr_e1q6"></div>
+</div>
+
+<div class="question-card" id="card_e1q7">
+<div class="question-top"><div class="question-number">7</div>
+<div class="question-text">Montrer que l'ordre d'exécution donné en exemple (A, B, C, D) aboutit à une situation d'<strong>interblocage</strong>.<br>
+<em>Rappel des ressources :</em>
+<table style="font-size:.82rem;margin:8px 0"><tr><th>A</th><th>B</th><th>C</th><th>D</th></tr>
+<tr><td>acquérir GPU</td><td>acquérir clavier</td><td>acquérir port</td><td>acquérir fichier</td></tr>
+<tr><td>faire calculs</td><td>acquérir fichier</td><td>faire calculs</td><td>faire calculs</td></tr>
+<tr><td>libérer GPU</td><td>libérer clavier</td><td>libérer port</td><td>acquérir clavier</td></tr>
+<tr><td></td><td>libérer fichier</td><td></td><td>libérer clavier</td></tr>
+<tr><td></td><td></td><td></td><td>libérer fichier</td></tr></table></div>
+<div class="question-points">0.5 pt</div></div>
+<div class="answer-area"><textarea id="ans_e1q7" placeholder="Expliquer la situation d'interblocage..." style="min-height:100px"></textarea></div>
+<div class="correction-box" id="corr_e1q7"></div>
+</div>
+
+<div style="text-align:right;margin-top:10px"><button class="btn btn-primary" onclick="switchTab(1)">Exercice suivant →</button></div>
+</div>
+
+<!-- ============ EXERCICE 2 ============ -->
+<div class="exercise-panel" id="panel1">
+<div class="exercise-header">
+<h2>Exercice 2 — Graphes d'amitié</h2>
+<div class="theme">Graphes : matrice d'adjacence, dictionnaire de listes, parcours en profondeur</div>
+<span class="points-badge">6 points</span>
+</div>
+
+<div class="context-box">
+<p>Le groupe est constitué de huit personnes : <strong>Anas (A)</strong>, <strong>Emma (E)</strong>, <strong>Gabriel (G)</strong>, <strong>Jade (J)</strong>, <strong>Lou (L)</strong>, <strong>Milo (M)</strong>, <strong>Nina (N)</strong> et <strong>Yanis (Y)</strong>.</p>
+<ul>
+<li>Gabriel est ami avec Jade, Yanis, Nina et Milo</li>
+<li>Jade est amie avec Gabriel, Yanis, Emma et Lou</li>
+<li>Yanis est ami avec Gabriel, Jade, Emma, Nina, Milo et Anas</li>
+<li>Emma est amie avec Jade, Yanis et Nina</li>
+<li>Nina est amie avec Gabriel, Yanis et Emma</li>
+<li>Milo est ami avec Gabriel, Yanis et Anas</li>
+<li>Anas est ami avec Yanis et Milo</li>
+<li>Lou est amie avec Jade</li>
+</ul>
+<pre><code>sommets = ['G', 'J', 'Y', 'E', 'N', 'M', 'A', 'L']</code></pre>
+<p>On dispose d'une fonction <code>position(l, s)</code> qui renvoie la position du sommet <code>s</code> dans la liste <code>l</code> s'il est présent, <code>None</code> sinon.</p>
+</div>
+
+<div class="part-header"><h3>Partie A : Matrice d'adjacence</h3></div>
+
+<div class="question-card" id="card_e2q1">
+<div class="question-top"><div class="question-number">1</div>
+<div class="question-text">Dessiner ce graphe en représentant chaque personne par la première lettre de son prénom entourée d'un cercle. Décrire les sommets et les arêtes.</div>
+<div class="question-points">0.5 pt</div></div>
+<div class="answer-area"><textarea id="ans_e2q1" placeholder="Sommets : G, J, Y, E, N, M, A, L&#10;Arêtes : G-J, G-Y, G-N, G-M, ..." style="min-height:100px"></textarea></div>
+<div class="correction-box" id="corr_e2q1"></div>
+</div>
+
+<div class="question-card" id="card_e2q2">
+<div class="question-top"><div class="question-number">2</div>
+<div class="question-text">Recopier et compléter l'implémentation de la matrice d'adjacence du graphe.<br><em>Ordre des sommets : G, J, Y, E, N, M, A, L</em>
+<pre><code># sommets : G, J, Y, E, N, M, A, L
+matrice_adj = [[0, 1, 1, 0, 1, 1, 0, 0],  # G
+               [...],  # J
+               [...],  # Y
+               [...],  # E
+               [...],  # N
+               [...],  # M
+               [...],  # A
+               [...]]  # L</code></pre></div>
+<div class="question-points">1 pt</div></div>
+<div class="answer-area"><div class="code-editor-wrapper"><textarea id="ans_e2q2" class="code-editor" data-mode="python"></textarea></div></div>
+<div class="correction-box" id="corr_e2q2"></div>
+</div>
+
+<div class="question-card" id="card_e2q3">
+<div class="question-top"><div class="question-number">3</div>
+<div class="question-text">Indiquer quel seront les retours de l'exécution des instructions suivantes :
+<pre><code>>>> position(sommets, 'G')
+>>> position(sommets, 'Z')</code></pre></div>
+<div class="question-points">0.5 pt</div></div>
+<div class="answer-area"><textarea id="ans_e2q3" placeholder="position(sommets, 'G') → ...&#10;position(sommets, 'Z') → ..."></textarea></div>
+<div class="correction-box" id="corr_e2q3"></div>
+</div>
+
+<div class="question-card" id="card_e2q4">
+<div class="question-top"><div class="question-number">4</div>
+<div class="question-text">Recopier et compléter le code de la fonction <code>nb_amis(L, m, s)</code> :
+<pre><code>def nb_amis(L, m, s):
+    pos_s = ...            # ligne 2
+    if pos_s == None:
+        return ...         # ligne 4
+    amis = 0
+    for i in range(len(m)):
+        amis += ...        # ligne 7
+    return ...             # ligne 8</code></pre></div>
+<div class="question-points">1 pt</div></div>
+<div class="answer-area"><div class="code-editor-wrapper"><textarea id="ans_e2q4" class="code-editor" data-mode="python"></textarea></div></div>
+<div class="correction-box" id="corr_e2q4"></div>
+</div>
+
+<div class="question-card" id="card_e2q5">
+<div class="question-top"><div class="question-number">5</div>
+<div class="question-text">Indiquer quel est le retour de l'exécution de la commande suivante :
+<pre><code>>>> nb_amis(sommets, matrice_adj, 'G')</code></pre></div>
+<div class="question-points">0.5 pt</div></div>
+<div class="answer-area"><textarea id="ans_e2q5" placeholder="Résultat..."></textarea></div>
+<div class="correction-box" id="corr_e2q5"></div>
+</div>
+
+<div class="part-header"><h3>Partie B : Dictionnaire de listes d'adjacence</h3></div>
+
+<div class="question-card" id="card_e2q6">
+<div class="question-top"><div class="question-number">6</div>
+<div class="question-text">Dans un dictionnaire Python <code>{c : v}</code>, indiquer ce que représentent <code>c</code> et <code>v</code>.</div>
+<div class="question-points">0.5 pt</div></div>
+<div class="answer-area"><textarea id="ans_e2q6" placeholder="c représente ... et v représente ..."></textarea></div>
+<div class="correction-box" id="corr_e2q6"></div>
+</div>
+
+<div class="question-card" id="card_e2q7">
+<div class="question-top"><div class="question-number">7</div>
+<div class="question-text">Recopier et compléter le dictionnaire de listes d'adjacence <code>graphe</code> pour qu'il modélise complètement le groupe d'amis.
+<pre><code>graphe = {'G' : ['J', 'Y', 'N', 'M'],
+          'J' : ...,
+          ...
+         }</code></pre></div>
+<div class="question-points">0.5 pt</div></div>
+<div class="answer-area"><div class="code-editor-wrapper"><textarea id="ans_e2q7" class="code-editor" data-mode="python"></textarea></div></div>
+<div class="correction-box" id="corr_e2q7"></div>
+</div>
+
+<div class="question-card" id="card_e2q8">
+<div class="question-top"><div class="question-number">8</div>
+<div class="question-text">Écrire le code de la fonction <code>nb_amis(d, s)</code> qui prend un dictionnaire d'adjacence <code>d</code> et un nom de sommet <code>s</code>, et renvoie le nombre d'amis de <code>s</code>.<br><em>Exemple : <code>nb_amis(graphe, 'L')</code> renvoie <code>1</code></em></div>
+<div class="question-points">0.5 pt</div></div>
+<div class="answer-area"><div class="code-editor-wrapper"><textarea id="ans_e2q8" class="code-editor" data-mode="python"></textarea></div></div>
+<div class="correction-box" id="corr_e2q8"></div>
+</div>
+
+<div class="context-box">
+<p><strong>Situation modifiée :</strong> Milo s'est fâché avec Gabriel et Yanis, Anas s'est fâché avec Yanis. Le nouveau graphe est :</p>
+<pre><code>graphe = {'G': ['J', 'N'],
+          'J': ['G', 'Y', 'E', 'L'],
+          'Y': ['J', 'E', 'N'],
+          'E': ['J', 'Y', 'N'],
+          'N': ['G', 'Y', 'E'],
+          'M': ['A'],
+          'A': ['M'],
+          'L': ['J']}</code></pre>
+<p>Le <strong>cercle d'amis</strong> de <em>Nom</em> = toute personne atteignable dans le graphe à partir de <em>Nom</em> (parcours en profondeur).</p>
+</div>
+
+<div class="question-card" id="card_e2q9">
+<div class="question-top"><div class="question-number">9</div>
+<div class="question-text">Donner la liste du <strong>cercle d'amis de Lou</strong> (avec le graphe modifié).</div>
+<div class="question-points">0.5 pt</div></div>
+<div class="answer-area"><textarea id="ans_e2q9" placeholder="Cercle d'amis de Lou : ..."></textarea></div>
+<div class="correction-box" id="corr_e2q9"></div>
+</div>
+
+<div class="question-card" id="card_e2q10">
+<div class="question-top"><div class="question-number">10</div>
+<div class="question-text">Recopier et compléter le code de la fonction <code>parcours_en_profondeur(d, s)</code> :
+<pre><code>def parcours_en_profondeur(d, s, visites=[]):
+    ...                              # ligne 2
+    for v in d[s]:
+        ...                          # ligne 4
+            parcours_en_profondeur(d, v)
+    ...                              # ligne 6</code></pre></div>
+<div class="question-points">0.5 pt</div></div>
+<div class="answer-area"><div class="code-editor-wrapper"><textarea id="ans_e2q10" class="code-editor" data-mode="python"></textarea></div></div>
+<div class="correction-box" id="corr_e2q10"></div>
+</div>
+
+<div style="display:flex;justify-content:space-between;margin-top:10px">
+<button class="btn btn-outline" onclick="switchTab(0)">← Exercice précédent</button>
+<button class="btn btn-primary" onclick="switchTab(2)">Exercice suivant →</button>
+</div>
+</div>
+
+<!-- ============ EXERCICE 3 ============ -->
+<div class="exercise-panel" id="panel2">
+<div class="exercise-header">
+<h2>Exercice 3 — Flashcards numériques</h2>
+<div class="theme">Programmation Python, modularité, bases de données relationnelles et requêtes SQL</div>
+<span class="points-badge">8 points</span>
+</div>
+
+<div class="part-header"><h3>Partie A : Fichier CSV et Python</h3></div>
+
+<div class="context-box">
+<p>Une étudiante utilise des <em>flashcards</em> (cartes de mémorisation). Elle stocke ses questions/réponses dans un fichier CSV.</p>
+<p><strong>Extrait de <code>flashcards.csv</code> :</strong></p>
+<pre><code>discipline;chapitre;question;réponse
+histoire;crise de 1929;jeudi noir - date;24 octobre 1929
+histoire;crise de 1929;jeudi noir - quoi;krach boursier
+histoire;2GM;l'Axe;Allemagne, Italie, Japon
+histoire;2GM;les Alliés;Chine, États-Unis, France, Royaume-Uni, URSS
+histoire;2GM;Pearl Harbor - date;7 décembre 1941
+philosophie;travail;Marx;aliénanation de l'ouvrier
+philosophie;travail;Beauvoir;donne de la valeur à l'homme
+philosophie;travail;Locke;permet de fonder le droit de propriété
+philosophie;travail;Crawford;satisfaction et estime de soi</code></pre>
+<p><strong>Code de l'étudiante :</strong></p>
+<pre><code>import csv
+import time
+
+def charger(nom_fichier):
+    with ...                                    # ligne 5
+        donnees = ...                           # ligne 6
+    return ...                                  # ligne 7
+
+def choix_discipline(donnees): ...
+def choix_chapitre(donnees, disc): ...
+def entrainement(donnees, disc, ch): ...
+
+flashcard = ...                                 # ligne 41
+d = ...                                         # ligne 42
+c = ...                                         # ligne 43
+entrainement(...)                               # ligne 44</code></pre>
+</div>
+
+<div class="question-card" id="card_e3q1">
+<div class="question-top"><div class="question-number">1</div>
+<div class="question-text">Donner le <strong>séparateur</strong> choisi par l'étudiante pour son fichier <code>flashcards.csv</code>.</div>
+<div class="question-points">0.5 pt</div></div>
+<div class="answer-area"><textarea id="ans_e3q1" placeholder="Le séparateur est..."></textarea></div>
+<div class="correction-box" id="corr_e3q1"></div>
+</div>
+
+<div class="question-card" id="card_e3q2">
+<div class="question-top"><div class="question-number">2</div>
+<div class="question-text">Justifier pourquoi l'étudiante a choisi ce séparateur.</div>
+<div class="question-points">0.5 pt</div></div>
+<div class="answer-area"><textarea id="ans_e3q2" placeholder="Justification..."></textarea></div>
+<div class="correction-box" id="corr_e3q2"></div>
+</div>
+
+<div class="question-card" id="card_e3q3">
+<div class="question-top"><div class="question-number">3</div>
+<div class="question-text">Recopier et compléter le code de la fonction <code>charger(nom_fichier)</code> qui lit le fichier CSV et renvoie les données sous forme d'une liste de dictionnaires.</div>
+<div class="question-points">1 pt</div></div>
+<div class="answer-area"><div class="code-editor-wrapper"><textarea id="ans_e3q3" class="code-editor" data-mode="python"></textarea></div></div>
+<div class="correction-box" id="corr_e3q3"></div>
+</div>
+
+<div class="question-card" id="card_e3q4">
+<div class="question-top"><div class="question-number">4</div>
+<div class="question-text">Le module <code>time</code> est importé à la ligne 2. Quelle est la méthode du module <code>time</code> utilisée dans ce code ?</div>
+<div class="question-points">0.5 pt</div></div>
+<div class="answer-area"><textarea id="ans_e3q4" placeholder="La méthode est..."></textarea></div>
+<div class="correction-box" id="corr_e3q4"></div>
+</div>
+
+<div class="question-card" id="card_e3q5">
+<div class="question-top"><div class="question-number">5</div>
+<div class="question-text">Donner le type de la variable <code>donnees[i]</code> (par exemple ligne 12).</div>
+<div class="question-points">0.5 pt</div></div>
+<div class="answer-area"><textarea id="ans_e3q5" placeholder="Le type est..."></textarea></div>
+<div class="correction-box" id="corr_e3q5"></div>
+</div>
+
+<div class="question-card" id="card_e3q6">
+<div class="question-top"><div class="question-number">6</div>
+<div class="question-text">Recopier et compléter les lignes 41 à 44 du programme principal.</div>
+<div class="question-points">1 pt</div></div>
+<div class="answer-area"><div class="code-editor-wrapper"><textarea id="ans_e3q6" class="code-editor" data-mode="python"></textarea></div></div>
+<div class="correction-box" id="corr_e3q6"></div>
+</div>
+
+<div class="part-header"><h3>Partie B : Base de données et SQL</h3></div>
+
+<div class="context-box">
+<p>L'étudiante met en œuvre une base de données relationnelle avec 4 tables :</p>
+<ul>
+<li><strong>discipline</strong>(<u>id</u> INT, lib TEXT)</li>
+<li><strong>chapitre</strong>(<u>id</u> INT, lib TEXT, #id_disc INT)</li>
+<li><strong>boite</strong>(<u>id</u> INT, lib TEXT, frequence INT)</li>
+<li><strong>flashcard</strong>(<u>id</u> INT, #id_ch INT, #id_boite INT, question TEXT, reponse TEXT, date_interro DATE)</li>
+</ul>
+<p><strong>Table boite :</strong></p>
+<table><tr><th>Id</th><th>lib</th><th>frequence</th></tr>
+<tr><td>1</td><td>tous les jours</td><td>1</td></tr>
+<tr><td>2</td><td>tous les deux jours</td><td>2</td></tr>
+<tr><td>3</td><td>tous les quatre jours</td><td>4</td></tr>
+<tr><td>4</td><td>tous les huit jours</td><td>8</td></tr></table>
+<p>Un enregistrement de la table <code>flashcard</code> : <code>5, 2, 1, Pearl Harbor - date, 6 décembre 1941</code></p>
+</div>
+
+<div class="question-card" id="card_e3q7">
+<div class="question-top"><div class="question-number">7</div>
+<div class="question-text">Écrire une requête SQL qui complète la table <code>boite</code> et insère la boite 5 de libellé <code>'tous les quinze jours'</code> et de fréquence <code>15</code>.</div>
+<div class="question-points">0.5 pt</div></div>
+<div class="answer-area"><div class="code-editor-wrapper"><textarea id="ans_e3q7" class="code-editor" data-mode="sql"></textarea></div></div>
+<div class="correction-box" id="corr_e3q7"></div>
+</div>
+
+<div class="question-card" id="card_e3q8">
+<div class="question-top"><div class="question-number">8</div>
+<div class="question-text">Écrire une requête SQL pour mettre à jour la date de Pearl Harbor renvoyée (la bonne date est le <strong>7 décembre 1941</strong>). L'enregistrement concerné a l'id <code>5</code>.</div>
+<div class="question-points">0.5 pt</div></div>
+<div class="answer-area"><div class="code-editor-wrapper"><textarea id="ans_e3q8" class="code-editor" data-mode="sql"></textarea></div></div>
+<div class="correction-box" id="corr_e3q8"></div>
+</div>
+
+<div class="question-card" id="card_e3q9">
+<div class="question-top"><div class="question-number">9</div>
+<div class="question-text">Écrire une requête SQL qui permet d'obtenir la <strong>liste des libellés des disciplines</strong>.</div>
+<div class="question-points">0.5 pt</div></div>
+<div class="answer-area"><div class="code-editor-wrapper"><textarea id="ans_e3q9" class="code-editor" data-mode="sql"></textarea></div></div>
+<div class="correction-box" id="corr_e3q9"></div>
+</div>
+
+<div class="question-card" id="card_e3q10">
+<div class="question-top"><div class="question-number">10</div>
+<div class="question-text">Écrire une requête SQL qui permet d'obtenir la <strong>liste des libellés des chapitres</strong> de la discipline <code>'histoire'</code>.</div>
+<div class="question-points">0.75 pt</div></div>
+<div class="answer-area"><div class="code-editor-wrapper"><textarea id="ans_e3q10" class="code-editor" data-mode="sql"></textarea></div></div>
+<div class="correction-box" id="corr_e3q10"></div>
+</div>
+
+<div class="question-card" id="card_e3q11">
+<div class="question-top"><div class="question-number">11</div>
+<div class="question-text">Écrire une requête SQL qui permet d'obtenir la <strong>liste des identifiants des flashcards</strong> de la discipline <code>'histoire'</code>.</div>
+<div class="question-points">0.75 pt</div></div>
+<div class="answer-area"><div class="code-editor-wrapper"><textarea id="ans_e3q11" class="code-editor" data-mode="sql"></textarea></div></div>
+<div class="correction-box" id="corr_e3q11"></div>
+</div>
+
+<div class="question-card" id="card_e3q12">
+<div class="question-top"><div class="question-number">12</div>
+<div class="question-text">Écrire une requête SQL pour <strong>supprimer</strong> toutes les flashcards de la boite d'identifiant <code>3</code>.</div>
+<div class="question-points">0.5 pt</div></div>
+<div class="answer-area"><div class="code-editor-wrapper"><textarea id="ans_e3q12" class="code-editor" data-mode="sql"></textarea></div></div>
+<div class="correction-box" id="corr_e3q12"></div>
+</div>
+
+<div style="text-align:left;margin-top:10px">
+<button class="btn btn-outline" onclick="switchTab(1)">← Exercice précédent</button>
+</div>
+</div>
+
+<!-- ============ SUBMIT ============ -->
+<div class="submit-section" id="submitSection">
+<div style="max-width:480px;margin:0 auto;padding:28px;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow)">
+<h2 style="margin-bottom:8px">📩 Soumettre ma copie</h2>
+<p style="color:var(--text-light);font-size:.88rem;margin-bottom:18px">Vérifiez vos réponses avant de soumettre. Après soumission, les réponses seront verrouillées et la correction affichée.</p>
+<button class="btn btn-primary" id="submitBtn" onclick="submitExam()" style="font-size:1.05rem;padding:14px 38px">📝 Soumettre ma copie</button>
+</div>
+</div>
+</div>
+
+<!-- ============ RESULTS MODAL ============ -->
+<div class="results-overlay" id="resultsOverlay">
+<div class="results-modal" id="resultsModal">
+<h2>📊 Résultats de l'évaluation</h2>
+<div class="grade-circle" id="gradeCircle"><span id="gradeNote">--</span><small>/20</small></div>
+<div class="appreciation" id="appreciation">--</div>
+<div class="percentage" id="percentage">--</div>
+<div class="exercise-scores" id="exerciseScores"></div>
+<div class="btn-group">
+<button class="btn btn-primary" onclick="closeResults()">📋 Voir la correction</button>
+<button class="btn btn-success" onclick="exportPDF()">📄 Exporter en PDF</button>
+</div>
+</div>
+</div>
+
+<script>
+const examData=[
+{title:"Exercice 1",points:6,questions:[
+{id:"e1q1",pts:.5,type:"text",
+answer:"Prêt, élu et bloqué",
+keywords:["prêt","pret","élu","elu","bloqué","bloque"],
+explanation:"Les trois états d'un processus dans un système d'exploitation sont : Prêt (en attente d'exécution), Élu (en cours d'exécution sur le processeur) et Bloqué (en attente d'une ressource)."},
+{id:"e1q2",pts:.5,type:"text",
+answer:"Prêt et élu (pas de bloqué car on ne s'intéresse pas aux ressources)",
+keywords:["prêt","pret","élu","elu","pas","bloqué","bloque","deux"],
+explanation:"Sans gestion de ressources, un processus ne peut pas être bloqué. Il est soit Prêt (dans la file d'attente), soit Élu (en cours d'exécution)."},
+{id:"e1q3",pts:1,type:"code",
+answer:`def defile(self):
+    if len(self.contenu) == 0:
+        return None
+    else:
+        return self.contenu.pop(0)`,
+keywords:["defile","self","len","self.contenu","==","0","return None","else","self.contenu.pop(0)","est_vide"],
+explanation:"On ajoute un test : si la file est vide (len == 0 ou est_vide()), on renvoie None ; sinon, on renvoie le premier élément avec pop(0)."},
+{id:"e1q4",pts:1,type:"text",
+answer:"Cycle 1: p1, Cycle 2: p3 (p2 enfilé), Cycle 3: p1 (p4 enfilé), Cycle 4: p2, Cycle 5: p3, Cycle 6: p1, Cycle 7: p4, Cycle 8: p2, Cycle 9: p3, Cycle 10: p1 (fin p1), Cycle 11: p4, Cycle 12: p2 (fin p2), Cycle 13: p3, Cycle 14: p4 (fin p4), Cycle 15: p3 (fin p3)",
+keywords:["p1","p2","p3","p4"],
+explanation:"On suit l'ordonnancement tourniquet : à chaque cycle, on enfile le nouveau processus s'il y en a un, puis on défile et exécute. p1(durée 4), p2(durée 3), p3(durée 5), p4(durée 3). Les processus tournent dans la file jusqu'à épuisement de leur durée."},
+{id:"e1q5",pts:1.5,type:"code",
+answer:`def ajoute_nouveau_processus(self, proc):
+    self.file.enfile(proc)
+
+def tourniquet(self):
+    self.temps += 1
+    if not self.file.est_vide():
+        proc = self.file.defile()
+        proc.execute_un_cycle()
+        if not proc.est_fini():
+            self.file.enfile(proc)
+        return proc.nom
+    else:
+        return None`,
+keywords:["self.file.enfile","proc","self.file.defile","proc.execute_un_cycle","proc.est_fini","self.file.enfile(proc)","return proc.nom","return None"],
+explanation:"ajoute_nouveau_processus : on enfile le processus dans la file. tourniquet : on incrémente le temps, on défile un processus, on l'exécute un cycle, s'il n'est pas fini on le ré-enfile, et on renvoie son nom."},
+{id:"e1q6",pts:1,type:"code",
+answer:`ord = Ordonnanceur()
+fin = False
+while not fin:
+    if ord.temps in depart_proc:
+        ord.ajoute_nouveau_processus(depart_proc[ord.temps])
+    elu = ord.tourniquet()
+    if elu == None:
+        fin = True
+    else:
+        print(elu)`,
+keywords:["Ordonnanceur","while","not fin","ord.temps","depart_proc","ajoute_nouveau_processus","tourniquet","elu","None","print"],
+explanation:"On crée un ordonnanceur, puis dans une boucle : on vérifie si un processus doit démarrer à ce cycle, on appelle tourniquet(), on affiche le processus élu, et on s'arrête quand tourniquet renvoie None."},
+{id:"e1q7",pts:.5,type:"text",
+answer:"B possède le clavier et attend le fichier ; D possède le fichier et attend le clavier. B ne peut pas libérer le clavier sans le fichier, et D ne peut pas libérer le fichier sans le clavier : situation d'interblocage.",
+keywords:["interblocage","B","D","clavier","fichier","attend","possède","possede","deadlock","bloqu"],
+explanation:"B a acquis le clavier et attend le fichier pour continuer. D a acquis le fichier et attend le clavier. Chacun attend une ressource détenue par l'autre : c'est un interblocage (deadlock)."}
+]},
+{title:"Exercice 2",points:6,questions:[
+{id:"e2q1",pts:.5,type:"text",
+answer:"Sommets : G, J, Y, E, N, M, A, L\nArêtes : G-J, G-Y, G-N, G-M, J-Y, J-E, J-L, Y-E, Y-N, Y-M, Y-A, E-N, M-A",
+keywords:["G","J","Y","E","N","M","A","L"],
+explanation:"Le graphe a 8 sommets et 13 arêtes représentant les liens d'amitié entre les 8 personnes."},
+{id:"e2q2",pts:1,type:"code",
+answer:`matrice_adj = [[0, 1, 1, 0, 1, 1, 0, 0],
+               [1, 0, 1, 1, 0, 0, 0, 1],
+               [1, 1, 0, 1, 1, 1, 1, 0],
+               [0, 1, 1, 0, 1, 0, 0, 0],
+               [1, 0, 1, 1, 0, 0, 0, 0],
+               [1, 0, 1, 0, 0, 0, 1, 0],
+               [0, 0, 1, 0, 0, 1, 0, 0],
+               [0, 1, 0, 0, 0, 0, 0, 0]]`,
+keywords:["matrice_adj","[0, 1, 1, 0, 1, 1, 0, 0]","[1, 0, 1, 1, 0, 0, 0, 1]","[1, 1, 0, 1, 1, 1, 1, 0]","[0, 1, 0, 0, 0, 0, 0, 0]"],
+explanation:"La matrice est symétrique (graphe non orienté). Ordre : G, J, Y, E, N, M, A, L. Un 1 à l'intersection (i,j) signifie que les sommets i et j sont amis."},
+{id:"e2q3",pts:.5,type:"text",
+answer:"position(sommets, 'G') → 0\nposition(sommets, 'Z') → None",
+keywords:["0","none"],
+explanation:"'G' est en position 0 dans la liste sommets. 'Z' n'est pas dans la liste, donc la fonction renvoie None."},
+{id:"e2q4",pts:1,type:"code",
+answer:`def nb_amis(L, m, s):
+    pos_s = position(L, s)
+    if pos_s == None:
+        return None
+    amis = 0
+    for i in range(len(m)):
+        amis += m[pos_s][i]
+    return amis`,
+keywords:["nb_amis","position(L, s)","position","pos_s","None","return None","amis","m[pos_s][i]","return amis"],
+explanation:"Ligne 2 : on cherche la position de s. Ligne 4 : si absent, on renvoie None. Ligne 7 : on somme les 1 de la ligne pos_s de la matrice. Ligne 8 : on renvoie le total."},
+{id:"e2q5",pts:.5,type:"text",
+answer:"4",
+keywords:["4"],
+explanation:"Gabriel (G) est ami avec J, Y, N, M → 4 amis. La somme de la ligne G dans la matrice vaut 4."},
+{id:"e2q6",pts:.5,type:"text",
+answer:"c représente la clé et v représente la valeur",
+keywords:["clé","cle","key","valeur","value"],
+explanation:"Dans un dictionnaire Python {c: v}, c est la clé (key) et v est la valeur (value) associée à cette clé."},
+{id:"e2q7",pts:.5,type:"code",
+answer:`graphe = {'G': ['J', 'Y', 'N', 'M'],
+          'J': ['G', 'Y', 'E', 'L'],
+          'Y': ['G', 'J', 'E', 'N', 'M', 'A'],
+          'E': ['J', 'Y', 'N'],
+          'N': ['G', 'Y', 'E'],
+          'M': ['G', 'Y', 'A'],
+          'A': ['Y', 'M'],
+          'L': ['J']}`,
+keywords:["graphe","'G'","'J'","'Y'","'E'","'N'","'M'","'A'","'L'"],
+explanation:"Chaque clé est un sommet, et sa valeur est la liste de ses voisins (amis). Le graphe est non orienté, donc si A est voisin de B, B est voisin de A."},
+{id:"e2q8",pts:.5,type:"code",
+answer:`def nb_amis(d, s):
+    return len(d[s])`,
+keywords:["nb_amis","return","len","d[s]"],
+explanation:"Le nombre d'amis d'un sommet s est simplement la longueur de la liste d[s]."},
+{id:"e2q9",pts:.5,type:"text",
+answer:"Cercle d'amis de Lou : J, G, Y, E, N",
+keywords:["j","g","y","e","n"],
+explanation:"En partant de L, on atteint J (ami de L), puis G, Y, E, N par les liens d'amitié. M et A ne sont pas accessibles depuis L dans le graphe modifié."},
+{id:"e2q10",pts:.5,type:"code",
+answer:`def parcours_en_profondeur(d, s, visites=[]):
+    visites.append(s)
+    for v in d[s]:
+        if v not in visites:
+            parcours_en_profondeur(d, v)
+    return visites`,
+keywords:["parcours_en_profondeur","visites.append(s)","v not in visites","parcours_en_profondeur(d, v)","return visites"],
+explanation:"Ligne 2 : on ajoute s aux visités. Ligne 4 : on ne visite que les voisins non encore visités. Ligne 6 : on renvoie la liste des visités."}
+]},
+{title:"Exercice 3",points:8,questions:[
+{id:"e3q1",pts:.5,type:"text",
+answer:"Le séparateur est le point-virgule (;)",
+keywords:[";","point-virgule","point virgule"],
+explanation:"En observant le fichier flashcards.csv, les champs sont séparés par des points-virgules (;)."},
+{id:"e3q2",pts:.5,type:"text",
+answer:"Parce que la virgule est déjà utilisée dans les données (exemple : 'Allemagne, Italie, Japon')",
+keywords:["virgule","utilisée","données","donnees","allemagne","italie"],
+explanation:"Si on utilisait la virgule comme séparateur, les réponses contenant des virgules (comme les listes de pays) seraient mal interprétées."},
+{id:"e3q3",pts:1,type:"code",
+answer:`def charger(nom_fichier):
+    with open(nom_fichier, 'r') as f:
+        donnees = list(csv.DictReader(f, delimiter=';'))
+    return donnees`,
+keywords:["charger","open","nom_fichier","'r'","as","csv.DictReader","delimiter","';'","list","return donnees"],
+explanation:"On ouvre le fichier en lecture, on utilise csv.DictReader avec le séparateur ';', on convertit en liste et on renvoie le résultat."},
+{id:"e3q4",pts:.5,type:"text",
+answer:"La méthode sleep (time.sleep(5) et time.sleep(1))",
+keywords:["sleep"],
+explanation:"La méthode time.sleep() est utilisée aux lignes 37 et 39 pour mettre en pause l'exécution (5 secondes puis 1 seconde)."},
+{id:"e3q5",pts:.5,type:"text",
+answer:"donnees[i] est un dictionnaire (dict)",
+keywords:["dictionnaire","dict"],
+explanation:"csv.DictReader renvoie des objets OrderedDict/dict. Chaque élément donnees[i] est donc un dictionnaire avec les clés 'discipline', 'chapitre', 'question', 'réponse'."},
+{id:"e3q6",pts:1,type:"code",
+answer:`flashcard = charger('flashcards.csv')
+d = choix_discipline(flashcard)
+c = choix_chapitre(flashcard, d)
+entrainement(flashcard, d, c)`,
+keywords:["charger","flashcards.csv","choix_discipline","flashcard","choix_chapitre","flashcard","d","entrainement","flashcard","d","c"],
+explanation:"Ligne 41 : on charge les données. Ligne 42 : on choisit la discipline. Ligne 43 : on choisit le chapitre. Ligne 44 : on lance l'entraînement avec les paramètres."},
+{id:"e3q7",pts:.5,type:"code",
+answer:`INSERT INTO boite
+VALUES (5, 'tous les quinze jours', 15);`,
+keywords:["INSERT","INTO","boite","VALUES","5","tous les quinze jours","15"],
+explanation:"On insère un nouvel enregistrement dans la table boite avec id=5, lib='tous les quinze jours' et frequence=15."},
+{id:"e3q8",pts:.5,type:"code",
+answer:`UPDATE flashcard
+SET reponse = '7 décembre 1941'
+WHERE id = 5;`,
+keywords:["UPDATE","flashcard","SET","reponse","7 décembre 1941","7 decembre 1941","WHERE","id","=","5"],
+explanation:"On met à jour la colonne reponse de la flashcard d'id 5 avec la bonne date."},
+{id:"e3q9",pts:.5,type:"code",
+answer:`SELECT lib
+FROM discipline;`,
+keywords:["SELECT","lib","FROM","discipline"],
+explanation:"On sélectionne la colonne lib de la table discipline pour obtenir tous les libellés."},
+{id:"e3q10",pts:.75,type:"code",
+answer:`SELECT chapitre.lib
+FROM chapitre
+JOIN discipline ON chapitre.id_disc = discipline.id
+WHERE discipline.lib = 'histoire';`,
+keywords:["SELECT","chapitre.lib","lib","FROM","chapitre","JOIN","discipline","ON","id_disc","discipline.id","WHERE","histoire"],
+explanation:"On fait une jointure entre chapitre et discipline pour filtrer les chapitres de la discipline 'histoire'."},
+{id:"e3q11",pts:.75,type:"code",
+answer:`SELECT flashcard.id
+FROM flashcard
+JOIN chapitre ON flashcard.id_ch = chapitre.id
+JOIN discipline ON discipline.id = chapitre.id_disc
+WHERE discipline.lib = 'histoire';`,
+keywords:["SELECT","flashcard.id","FROM","flashcard","JOIN","chapitre","id_ch","chapitre.id","JOIN","discipline","discipline.id","id_disc","WHERE","histoire"],
+explanation:"Double jointure : flashcard → chapitre → discipline, puis filtre sur discipline.lib = 'histoire'."},
+{id:"e3q12",pts:.5,type:"code",
+answer:`DELETE FROM flashcard
+WHERE id_boite = 3;`,
+keywords:["DELETE","FROM","flashcard","WHERE","id_boite","=","3"],
+explanation:"On supprime tous les enregistrements de la table flashcard dont l'id_boite est 3."}
+]}];
+
+let editors={},timerInterval,remainingSeconds=3*3600+30*60,isSubmitted=false;
+
+document.addEventListener('DOMContentLoaded',()=>{initEditors();loadSavedState();startTimer();setInterval(autoSave,30000)});
+
+function initEditors(){document.querySelectorAll('.code-editor').forEach(ta=>{const mode=ta.dataset.mode||'python';const cm=CodeMirror.fromTextArea(ta,{mode:mode==='sql'?'text/x-sql':'python',theme:'dracula',lineNumbers:true,indentUnit:4,tabSize:4,indentWithTabs:false,lineWrapping:true,matchBrackets:true,extraKeys:{"Tab":function(cm){cm.replaceSelection("    ","end")}}});editors[ta.id]=cm;cm.setSize(null,'auto');cm.on('change',()=>{cm.setSize(null,'auto')})})}
+
+function startTimer(){updateTimerDisplay();timerInterval=setInterval(()=>{if(isSubmitted){clearInterval(timerInterval);return}remainingSeconds--;if(remainingSeconds<=0){remainingSeconds=0;clearInterval(timerInterval);submitExam()}updateTimerDisplay()},1000)}
+
+function updateTimerDisplay(){const h=Math.floor(remainingSeconds/3600),m=Math.floor((remainingSeconds%3600)/60),s=remainingSeconds%60;document.getElementById('timerDisplay').textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;const box=document.getElementById('timerBox');box.classList.remove('warning','danger');if(remainingSeconds<600)box.classList.add('danger');else if(remainingSeconds<1800)box.classList.add('warning')}
+
+function switchTab(idx){document.querySelectorAll('.exercise-panel').forEach((p,i)=>p.classList.toggle('active',i===idx));document.querySelectorAll('.nav-tab').forEach((t,i)=>t.classList.toggle('active',i===idx));window.scrollTo({top:0,behavior:'smooth'})}
+
+function autoSave(){if(isSubmitted)return;const data={time:remainingSeconds,answers:{}};examData.forEach(ex=>ex.questions.forEach(q=>{if(editors[`ans_${q.id}`])data.answers[q.id]=editors[`ans_${q.id}`].getValue();else{const el=document.getElementById(`ans_${q.id}`);if(el)data.answers[q.id]=el.value}}));localStorage.setItem('nsi_exam_2024_s03',JSON.stringify(data));document.getElementById('saveIndicator').innerHTML='<span class="dot" style="background:#00b894"></span> Sauvegardé à '+new Date().toLocaleTimeString()}
+
+function loadSavedState(){const raw=localStorage.getItem('nsi_exam_2024_s03');if(!raw)return;try{const data=JSON.parse(raw);if(data.time)remainingSeconds=data.time;updateTimerDisplay();if(data.answers)Object.keys(data.answers).forEach(qid=>{if(editors[`ans_${qid}`])editors[`ans_${qid}`].setValue(data.answers[qid]);else{const el=document.getElementById(`ans_${qid}`);if(el)el.value=data.answers[qid]}})}catch(e){}}
+
+function resetExam(){if(!confirm('⚠️ Réinitialiser toutes vos réponses et le minuteur ?'))return;localStorage.removeItem('nsi_exam_2024_s03');location.reload()}
+
+function getAnswer(qid){if(editors[`ans_${qid}`])return editors[`ans_${qid}`].getValue().trim();const el=document.getElementById(`ans_${qid}`);return el?el.value.trim():''}
+
+function normalize(s){return s.toLowerCase().replace(/[''"`]/g,"'").replace(/\s+/g,' ').replace(/[àâä]/g,'a').replace(/[éèêë]/g,'e').replace(/[îï]/g,'i').replace(/[ôö]/g,'o').replace(/[ùûü]/g,'u').replace(/ç/g,'c').trim()}
+
+function gradeQuestion(q){const studentAns=getAnswer(q.id);if(!studentAns)return{score:0,max:q.pts,correct:false};const normAns=normalize(studentAns);let matchCount=0;const req=q.keywords.map(k=>normalize(k));req.forEach(kw=>{if(normAns.includes(kw))matchCount++});const ratio=matchCount/req.length;let score;if(ratio>=.7)score=q.pts;else if(ratio>=.4)score=q.pts*.5;else if(ratio>=.2)score=q.pts*.25;else score=0;score=Math.round(score*4)/4;return{score,max:q.pts,correct:score>=q.pts*.7}}
+
+function submitExam(){if(isSubmitted)return;if(!confirm('📝 Êtes-vous sûr de vouloir soumettre votre copie ?\nLes réponses seront verrouillées.'))return;isSubmitted=true;clearInterval(timerInterval);document.getElementById('submitBtn').disabled=true;document.getElementById('submitBtn').textContent='✅ Copie soumise';document.querySelectorAll('.answer-area textarea').forEach(ta=>ta.readOnly=true);Object.values(editors).forEach(cm=>cm.setOption('readOnly',true));document.querySelectorAll('.question-card').forEach(c=>c.classList.add('locked'));let totalScore=0,totalMax=0,exScores=[];examData.forEach((ex,eIdx)=>{let exScore=0,exMax=0;ex.questions.forEach(q=>{const result=gradeQuestion(q);exScore+=result.score;exMax+=result.max;totalScore+=result.score;totalMax+=result.max;showCorrection(q,result)});exScores.push({title:ex.title,score:exScore,max:exMax});const tab=document.querySelector(`.nav-tab[data-tab="${eIdx}"] .badge`);if(tab){tab.textContent=`${exScore.toFixed(1)}/${exMax}`;if(exScore>=exMax*.7)tab.parentElement.classList.add('done')}});showResults(totalScore,totalMax,exScores)}
+
+function showCorrection(q,result){const card=document.getElementById(`card_${q.id}`),corr=document.getElementById(`corr_${q.id}`);if(!card||!corr)return;card.classList.add(result.correct?'correct':'incorrect');const icon=result.correct?'✅ Correct':(result.score>0?'⚠️ Partiellement correct':'❌ Incorrect');const cls=result.correct?'correct-box':'incorrect-box';corr.className=`correction-box show ${cls}`;corr.innerHTML=`<div class="result-icon">${icon} — ${result.score}/${result.max} pt${result.max>1?'s':''}</div><h4>📌 Réponse attendue :</h4><div class="expected">${escapeHtml(q.answer)}</div><div class="explanation">💡 <strong>Explication :</strong> ${q.explanation}</div>`}
+
+function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+function showResults(total,max,exScores){const pct=Math.round((total/max)*100),note=Math.round((total/max)*20*4)/4;let appreciation,gradeClass;if(note>=16){appreciation='🏆 Excellent';gradeClass='grade-excellent'}else if(note>=14){appreciation='👏 Bien';gradeClass='grade-bien'}else if(note>=12){appreciation='👍 Assez bien';gradeClass='grade-assez-bien'}else if(note>=10){appreciation='✊ Passable';gradeClass='grade-passable'}else{appreciation='📚 Insuffisant';gradeClass='grade-insuffisant'}document.getElementById('gradeCircle').className=`grade-circle ${gradeClass}`;document.getElementById('gradeNote').textContent=note.toFixed(2);document.getElementById('appreciation').textContent=appreciation;document.getElementById('percentage').textContent=`${pct}% de réussite — ${total.toFixed(2)} points sur ${max}`;let html='';exScores.forEach(es=>{const p=Math.round((es.score/es.max)*100),color=p>=70?'#00b894':p>=40?'#fdcb6e':'#d63031';html+=`<div class="score-row"><div><strong>${es.title}</strong><div class="progress-bar"><div class="fill" style="width:${p}%;background:${color}"></div></div></div><div style="font-weight:700;color:${color}">${es.score.toFixed(2)} / ${es.max}</div></div>`});document.getElementById('exerciseScores').innerHTML=html;document.getElementById('resultsOverlay').classList.add('show')}
+
+function closeResults(){document.getElementById('resultsOverlay').classList.remove('show');switchTab(0)}
+
+function exportPDF(){closeResults();const el=document.getElementById('mainContainer');document.querySelectorAll('.exercise-panel').forEach(p=>p.style.display='block');html2pdf().set({margin:10,filename:'NSI_2024_S03_Copie_Corrigee.pdf',image:{type:'jpeg',quality:.95},html2canvas:{scale:2,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(el).save().then(()=>{document.querySelectorAll('.exercise-panel').forEach(p=>p.style.display='')})}
+</script>
+</body>
+</html>
